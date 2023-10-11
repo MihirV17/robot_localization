@@ -19,7 +19,7 @@ from occupancy_field import OccupancyField
 from helper_functions import TFHelper
 from rclpy.qos import qos_profile_sensor_data
 from angle_helpers import quaternion_from_euler
-
+import random
 class Particle(object):
     """ Represents a hypothesis (particle) of the robot's pose consisting of x,y and theta (yaw)
         Attributes:
@@ -193,26 +193,31 @@ class ParticleFilter(Node):
         else:
             self.get_logger().warn("Can't set map->odom transform since no odom data received")
 
+
     def update_particles_with_odom(self):
-        """ Update the particles using the newly given odometry pose.
-            The function computes the value delta which is a tuple (x,y,theta)
+        """ Update all particles using the newly given odometry pose.
+            The function computes the value delta which is a tuple (x, y, theta)
             that indicates the change in position and angle between the odometry
             when the particles were last updated and the current odometry.
         """
         new_odom_xy_theta = self.transform_helper.convert_pose_to_xy_and_theta(self.odom_pose)
-        # compute the change in x,y,theta since our last update
+
         if self.current_odom_xy_theta:
             old_odom_xy_theta = self.current_odom_xy_theta
-            delta = (new_odom_xy_theta[0] - self.current_odom_xy_theta[0],
-                     new_odom_xy_theta[1] - self.current_odom_xy_theta[1],
-                     new_odom_xy_theta[2] - self.current_odom_xy_theta[2])
+            delta = (new_odom_xy_theta[0] - old_odom_xy_theta[0],
+                    new_odom_xy_theta[1] - old_odom_xy_theta[1],
+                    new_odom_xy_theta[2] - old_odom_xy_theta[2])
+
+            for particle in self.particle_cloud:
+                random_translation = random.uniform(-.1, 0.1)  
+                random_rotation = random.uniform(-0.1, 0.1)  
+
+                particle.x += delta[0] + random_translation
+                particle.y += delta[1] + random_translation
+                particle.theta += delta[2] + random_rotation
 
             self.current_odom_xy_theta = new_odom_xy_theta
-        else:
-            self.current_odom_xy_theta = new_odom_xy_theta
-            return
 
-        # TODO: modify particles using delta
 
     def resample_particles(self):
         """ Resample the particles according to the new particle weights.
@@ -238,18 +243,50 @@ class ParticleFilter(Node):
         xy_theta = self.transform_helper.convert_pose_to_xy_and_theta(msg.pose.pose)
         self.initialize_particle_cloud(msg.header.stamp, xy_theta)
 
+    
     def initialize_particle_cloud(self, timestamp, xy_theta=None):
-        """ Initialize the particle cloud.
-            Arguments
-            xy_theta: a triple consisting of the mean x, y, and theta (yaw) to initialize the
-                      particle cloud around.  If this input is omitted, the odometry will be used """
-        if xy_theta is None:
-            xy_theta = self.transform_helper.convert_pose_to_xy_and_theta(self.odom_pose)
-        self.particle_cloud = []
+
+        # if xy_theta is None:
+        #     xy_theta = self.transform_helper.convert_pose_to_xy_and_theta(self.odom_pose)
+        # self.particle_cloud = []
+        # self.particle_cloud.append(Particle(x=0.0, y=0.0, theta=0.0))
+
+        
         # TODO create particles
 
         self.normalize_particles()
         self.update_robot_pose()
+        """ Initialize the particle cloud in a circular shape with random scattering.
+            Arguments
+            xy_theta: a triple consisting of the mean x, y, and theta (yaw) to initialize the
+                    particle cloud around. If this input is omitted, the odometry will be used
+        """
+        if xy_theta is None:
+            xy_theta = self.transform_helper.convert_pose_to_xy_and_theta(self.odom_pose)
+        self.particle_cloud = []
+        num_particles = self.n_particles
+        radius = 1.0 
+        for i in range(num_particles):
+            angle = random.uniform(0, 2 * math.pi)
+            random_radius = random.uniform(0, radius)
+            x = xy_theta[0] + random_radius * math.cos(angle)
+            y = xy_theta[1] + random_radius * math.sin(angle)
+            theta = xy_theta[2] + random.uniform(-math.pi, math.pi)  
+            particle = Particle(x=x, y=y, theta=theta)
+    
+            if random.random() < 0.1:  
+                x_outlier = xy_theta[0] + random.uniform(-2 * radius, 2 * radius)
+                y_outlier = xy_theta[1] + random.uniform(-2 * radius, 2 * radius)
+                theta_outlier = random.uniform(-math.pi, math.pi)
+                particle.x = x_outlier
+                particle.y = y_outlier
+                particle.theta = theta_outlier
+            self.particle_cloud.append(particle)
+        initial_weight = 1.0 / num_particles
+        for particle in self.particle_cloud:
+            particle.w = initial_weight
+        self.update_robot_pose()
+
 
     def normalize_particles(self):
         """ Make sure the particle weights define a valid distribution (i.e. sum to 1.0) """
