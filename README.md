@@ -5,6 +5,14 @@
 
 In the context of our robot localization, we have developed a comprehensive architecture for implementing a particle filter. This particle filter aims to solve the problem of localizing a robot within a given map by leveraging information from both lidar and odometry readings. The primary objective is to provide a reliable pose estimation that can subsequently be utilized in various applications, such as path planning algorithms or similar processes. While our current implementation is still a work in progress and not performing as expected, all the individual components of the particle filter have been meticulously put in place. The next steps involve rigorous testing to pinpoint the areas where the algorithm is exhibiting incorrect behavior and to refine its performance.
 
+## Vizualization of Motion Propogation
+Every particle must adjust its position and orientation according to the robot's movement, which is denoted by a modification in the transformation from the base_link to the odom frame. The changes in the robot's odometry, specifically in terms of position and orientation, serve as the basis for updating the location and orientation of each particle. This update occurs within an imaginary base_link frame, with each particle at the center of its respective frame, as depicted in the illustration below.
+![Screenshot from 2023-10-16 22-11-19](https://github.com/MihirV17/robot_localization/assets/123433158/41c862f6-74bb-468e-86b8-19f2c3605e8c)
+
+The image presented illustrates the probability distribution of the particles. It focuses on how these particles are distributed in various directions, and this distribution pattern changes in response to the updated movements of the robot. In essence, it visually represents how the uncertainty or probability associated with each particle's position and orientation evolves as the robot moves and provides new information. The directions and orientations of the particles shift and adapt in accordance with the robot's latest movements, reflecting the dynamic nature of the localization or tracking process.
+![image](https://github.com/MihirV17/robot_localization/assets/123433158/8f058b29-32b7-4366-82a8-e64cf30b4aaf)
+
+
 ## Code Planning
 In our particle filter implementation, we've adopted a structured approach centered around the primary node pf.py. This central node is responsible for managing key components of the system, including a Map of the MAC, robot movement, and LIDAR data on the map. These components collectively enable the particle filter to perform its localization task effectively.
 
