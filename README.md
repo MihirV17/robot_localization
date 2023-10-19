@@ -5,6 +5,11 @@
 
 In the context of our robot localization, we have developed a comprehensive architecture for implementing a particle filter. This particle filter aims to solve the problem of localizing a robot within a given map by leveraging information from both lidar and odometry readings. The primary objective is to provide a reliable pose estimation that can subsequently be utilized in various applications, such as path planning algorithms or similar processes. While our current implementation is still a work in progress and not performing as expected, all the individual components of the particle filter have been meticulously put in place. The next steps involve rigorous testing to pinpoint the areas where the algorithm is exhibiting incorrect behavior and to refine its performance.
 
+## Particle Filter in Action
+https://github.com/MihirV17/robot_localization/assets/123433158/3c97bf69-0941-4a79-bb2d-5156f4a01c23
+
+
+
 ## Vizualization of Motion Propogation
 Every particle must adjust its position and orientation according to the robot's movement, which is denoted by a modification in the transformation from the base_link to the odom frame. The changes in the robot's odometry, specifically in terms of position and orientation, serve as the basis for updating the location and orientation of each particle. This update occurs within an imaginary base_link frame, with each particle at the center of its respective frame, as depicted in the illustration below.
 
